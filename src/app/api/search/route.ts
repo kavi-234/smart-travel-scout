@@ -1,18 +1,31 @@
 import { NextRequest, NextResponse } from "next/server"
 import { searchTravel } from "@/backend/services/gemini"
 
+/** Maximum characters we forward to the AI — guards against prompt injection and runaway tokens. */
+const MAX_QUERY_LENGTH = 300
+
 export async function POST(request: NextRequest) {
 
   try {
 
     const body = await request.json()
-    const query = body.query
+    const query = typeof body.query === "string" ? body.query.trim() : ""
 
     if (!query) {
       return NextResponse.json({ error: "Query is required" }, { status: 400 })
     }
 
-    const results = await searchTravel(query)
+    if (query.length > MAX_QUERY_LENGTH) {
+      return NextResponse.json(
+        { error: `Query is too long. Please keep it under ${MAX_QUERY_LENGTH} characters.` },
+        { status: 400 }
+      )
+    }
+
+    // Strip any embedded instruction-injection attempts (angle-bracket tags, prompt keywords)
+    const sanitizedQuery = query.replace(/<[^>]*>/g, "").replace(/\bignore\s+(?:above|previous|all)\b/gi, "")
+
+    const results = await searchTravel(sanitizedQuery)
 
     return NextResponse.json({ results })
 

@@ -120,11 +120,11 @@ export default function Home() {
               />
             </div>
 
-            {/* Stats strip */}
+            {/* Stats strip — values reflect actual inventory */}
             {!hasSearched && (
               <div className="animate-fade-up-delay2 mt-10 flex items-center justify-center gap-8 sm:gap-12 flex-wrap">
                 {[
-                  { value: "500+", label: "Destinations" },
+                  { value: "5", label: "Destinations" },
                   { value: "AI", label: "Smart Matching" },
                   { value: "Instant", label: "Results" },
                 ].map(({ value, label }) => (

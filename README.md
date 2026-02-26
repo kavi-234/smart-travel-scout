@@ -1,33 +1,87 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SmartTravelScout
 
-## Getting Started
+AI-powered travel discovery app. Describe your ideal trip in plain English and Gemini AI instantly matches it against a curated destination inventory.
 
-First, run the development server:
+**Live demo:** [Deploy to Vercel](#deploy-to-vercel)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+---
+
+## Tech stack
+
+| Layer | Choice |
+|---|---|
+| Framework | Next.js 15 (App Router) |
+| Language | TypeScript |
+| Styling | Tailwind CSS v4 |
+| AI | Gemini 2.0 Flash (Google AI Studio) |
+| Schema validation | Zod |
+| Deploy | Vercel |
+
+---
+
+## Environment variables
+
+Create a `.env.local` file in the project root:
+
+```
+GEMINI_API_KEY=your_key_here
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Get a free API key at [aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+> `.env*` is excluded by `.gitignore` — your key is never committed.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## Local development
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm install
+npm run dev
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+---
+
+## Deploy to Vercel
+
+1. Push this repo to GitHub.
+2. Go to [vercel.com/new](https://vercel.com/new) → import the repo.
+3. Under **Environment Variables**, add `GEMINI_API_KEY`.
+4. Click **Deploy**.
+
+`vercel.json` is already configured with a 15 s function timeout for the `/api/search` route.
+
+---
+
+## Architecture
+
+```
+src/
+  app/
+    page.tsx              # Homepage — all client state lives here
+    providers.tsx         # Dark-mode ThemeContext
+    layout.tsx            # Root layout + anti-flash dark mode script
+    globals.css           # Tailwind v4 config + animations
+    api/search/route.ts   # POST /api/search — validates query, calls Gemini
+    components/           # One file per UI component
+  backend/
+    data/inventory.ts     # Static destination list (add destinations here)
+    services/gemini.ts    # Gemini REST wrapper with timeout + token cap
+  shared/
+    schema.ts             # Zod schemas shared between API and service layer
+```
+
+### AI guardrails
+
+1. **Inventory-only results** — Gemini returns IDs; these are intersected with the real inventory before anything reaches the UI. The AI cannot invent destinations.
+2. **Token budget** — only `id`, `title`, `location`, and `tags` are sent in the prompt. Responses are capped at `maxOutputTokens: 512`.
+3. **Schema validation** — Zod rejects any response that doesn't match the expected `{results:[{id,reason}]}` shape.
+4. **Query guardrails** — queries are length-limited to 300 chars and stripped of HTML tags and prompt-injection patterns before forwarding.
+5. **Fetch timeout** — Gemini calls abort after 10 seconds to protect server response time.
+6. **Reason clamping** — AI-generated reason strings are clamped to 200 chars so card layout is never broken.
+
 
 ## Deploy on Vercel
 

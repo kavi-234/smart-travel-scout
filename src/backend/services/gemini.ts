@@ -6,19 +6,42 @@ import { GeminiResponseSchema } from "@/shared/schema"
 const GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1/models"
 const MODEL = "gemini-2.0-flash"
 
+/** Hard cap on Gemini output tokens — prevents runaway responses and reduces latency. */
+const MAX_OUTPUT_TOKENS = 512
+
+/** Abort the Gemini request if it hasn't responded within this many milliseconds. */
+const FETCH_TIMEOUT_MS = 10_000
+
+/**
+ * Low-level wrapper: sends a prompt to Gemini and returns the raw text response.
+ * Throws on non-2xx HTTP status, rate limiting, or timeout.
+ */
 async function callGemini(prompt: string): Promise<string> {
     const apiKey = process.env.GEMINI_API_KEY
     if (!apiKey) throw new Error("GEMINI_API_KEY is not set")
 
     const url = `${GEMINI_API_BASE}/${MODEL}:generateContent?key=${apiKey}`
 
-    const res = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-        }),
-    })
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS)
+
+    let res: Response
+    try {
+        res = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            signal: controller.signal,
+            body: JSON.stringify({
+                contents: [{ parts: [{ text: prompt }] }],
+                generationConfig: { maxOutputTokens: MAX_OUTPUT_TOKENS },
+            }),
+        })
+    } catch (err: any) {
+        if (err?.name === "AbortError") throw new Error("Gemini request timed out")
+        throw err
+    } finally {
+        clearTimeout(timer)
+    }
 
     if (!res.ok) {
         const err = await res.json().catch(() => ({}))
@@ -35,6 +58,19 @@ async function callGemini(prompt: string): Promise<string> {
     return text
 }
 
+/**
+ * Matches a free-text user query against the travel inventory using Gemini AI.
+ *
+ * Strategy:
+ *  1. Send only slim inventory fields (id, title, location, tags) to minimise token use.
+ *  2. Instruct Gemini to return a strict JSON schema — no prose, no markdown.
+ *  3. Validate the response with Zod; reject anything that doesn't conform.
+ *  4. Filter IDs against the real inventory so Gemini cannot invent destinations.
+ *  5. Clamp reason strings to 200 chars so card layout is never broken.
+ *
+ * @param query - Sanitised, length-checked user search string.
+ * @returns Array of matched inventory items enriched with an AI-generated reason.
+ */
 export async function searchTravel(query: string) {
 
     // Only send fields relevant to matching — reduces token usage significantly
@@ -76,6 +112,7 @@ JSON format: {"results":[{"id":<number>,"reason":"<why it matches>"}]}`
         throw new Error(`Schema validation failed: ${err.message}`)
     }
 
+    // Guardrail: only return IDs that actually exist in inventory — Gemini cannot invent destinations.
     return validated.results
         .filter((r) => inventory.some((inv) => inv.id === r.id))
         .map((r) => {
@@ -86,7 +123,8 @@ JSON format: {"results":[{"id":<number>,"reason":"<why it matches>"}]}`
                 location: item.location,
                 price: item.price,
                 tags: item.tags,
-                reason: r.reason,
+                // Clamp reason to 200 chars so card layout is never broken by runaway text
+                reason: r.reason.slice(0, 200),
             }
         })
 }

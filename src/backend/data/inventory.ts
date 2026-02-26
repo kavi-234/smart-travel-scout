@@ -1,11 +1,17 @@
+/** Shape of a single destination in the inventory. */
 export interface TravelItem {
   id: number
   title: string
   location: string
-  price: number
-  tags: string[]
+  price: number   // USD per-person estimated cost
+  tags: string[]  // Used by Gemini for semantic matching
 }
 
+/**
+ * Static travel inventory.
+ * Add new destinations here — Gemini sees only id/title/location/tags
+ * so there is no need to re-tune the prompt when this list grows.
+ */
 export const inventory: TravelItem[] = [
   {
     id: 1,

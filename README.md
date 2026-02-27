@@ -135,7 +135,7 @@ const sample = JSON.parse('{"results":[{"id":1,"reason":"test"}]}')
 console.log(GeminiResponseSchema.parse(sample)) // must not throw
 ```
 
-**Live demo:** [https://smart-travel-scout-ptyvlogai-kprabuddhi2001-gmailcoms-projects.vercel.app/l](#https://smart-travel-scout-five.vercel.app/)
+**Live demo:** [https://smart-travel-scout-five.vercel.app/](#https://smart-travel-scout-five.vercel.app/)
 
 ---
 

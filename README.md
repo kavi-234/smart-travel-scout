@@ -2,7 +2,7 @@
 
 AI-powered travel discovery app. Describe your ideal trip in plain English and Gemini AI instantly matches it against a curated destination inventory.
 
-**Live demo:** [Deploy to Vercel](#deploy-to-vercel)
+**Live demo:** [https://smart-travel-scout-ptyvlogai-kprabuddhi2001-gmailcoms-projects.vercel.app/l](#https://smart-travel-scout-ptyvlogai-kprabuddhi2001-gmailcoms-projects.vercel.app/)
 
 ---
 
@@ -27,12 +27,6 @@ Create a `.env.local` file in the project root:
 GEMINI_API_KEY=your_key_here
 ```
 
-Get a free API key at [aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey).
-
-> `.env*` is excluded by `.gitignore` — your key is never committed.
-
----
-
 ## Local development
 
 ```bash
@@ -41,17 +35,6 @@ npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
-
----
-
-## Deploy to Vercel
-
-1. Push this repo to GitHub.
-2. Go to [vercel.com/new](https://vercel.com/new) → import the repo.
-3. Under **Environment Variables**, add `GEMINI_API_KEY`.
-4. Click **Deploy**.
-
-`vercel.json` is already configured with a 15 s function timeout for the `/api/search` route.
 
 ---
 
@@ -146,5 +129,3 @@ It inferred `id` as `z.string()` because it had seen `id` fields typed as string
 const sample = JSON.parse('{"results":[{"id":1,"reason":"test"}]}')
 console.log(GeminiResponseSchema.parse(sample)) // must not throw
 ```
-
-Lesson: Copilot suggestions for schema types need manual verification against the actual API contract — it patterns-matches from context, not from the real data shape.

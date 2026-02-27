@@ -67,8 +67,9 @@ async function callGemini(prompt: string): Promise<string> {
         }
 
         if (!res.ok) {
-            const err = await res.json().catch(() => ({}))
-            const msg = (err as any)?.error?.message ?? res.statusText
+            const errBody = await res.json().catch(() => ({}))
+            const msg = (errBody as any)?.error?.message ?? res.statusText
+            // Treat all non-429 upstream errors as fatal (caller will fall back)
             throw new Error(`Gemini API error ${res.status}: ${msg}`)
         }
 
@@ -156,13 +157,10 @@ JSON format: {"results":[{"id":<number>,"reason":"<why it matches>"}]}`
         rawText = await callGemini(prompt)
     } catch (err: any) {
         console.error("Gemini call failed:", err.message)
-        // Quota exhausted — silently fall back to local keyword matching so the
-        // user still gets results instead of an error page.
-        if (err?.message === "RATE_LIMITED") {
-            console.warn("Gemini rate-limited — using local keyword fallback")
-            return localFallback(query)
-        }
-        throw err
+        // Fall back to local keyword matching for ANY Gemini failure —
+        // rate limits, auth errors, network errors, bad API key, etc.
+        console.warn("Falling back to local keyword search")
+        return localFallback(query)
     }
 
     // Strip markdown code fences if present (belt-and-suspenders)
@@ -172,16 +170,18 @@ JSON format: {"results":[{"id":<number>,"reason":"<why it matches>"}]}`
     try {
         parsed = JSON.parse(text)
     } catch {
-        console.error("Non-JSON response from Gemini:", rawText)
-        throw new Error(`Gemini returned non-JSON: ${rawText.slice(0, 300)}`)
+        console.error("Non-JSON response from Gemini — using local fallback. Raw:", rawText.slice(0, 300))
+        return localFallback(query)
     }
 
     let validated: { results: { id: number; reason: string }[] }
     try {
         validated = GeminiResponseSchema.parse(parsed) as typeof validated
     } catch (err: any) {
-        console.error("Schema validation failed:", err.message, "| Parsed:", parsed)
-        throw new Error(`Schema validation failed: ${err.message}`)
+        // Zod v4: err.message may be empty — use toString() for the full message
+        const msg = err?.toString?.() ?? err?.message ?? "unknown"
+        console.error("Schema validation failed:", msg, "| Parsed:", parsed)
+        return localFallback(query)
     }
 
     // Guardrail: only return IDs that actually exist in inventory — Gemini cannot invent destinations.

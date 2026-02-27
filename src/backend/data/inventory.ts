@@ -4,12 +4,12 @@ export interface TravelItem {
   title: string
   location: string
   price: number   // USD per-person estimated cost
-  tags: string[]  // Used by OpenAI for semantic matching
+  tags: string[]  // Used by Gemini for semantic matching
 }
 
 /**
  * Static travel inventory.
- * Add new destinations here — OpenAI sees only id/title/location/tags
+ * Add new destinations here — Gemini sees only id/title/location/tags
  * so there is no need to re-tune the prompt when this list grows.
  */
 export const inventory: TravelItem[] = [

@@ -98,7 +98,7 @@ export default function Home() {
               <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M12 2L13.09 8.26L19 6L15.45 11.25L22 12L15.45 12.75L19 18L13.09 15.74L12 22L10.91 15.74L5 18L8.55 12.75L2 12L8.55 11.25L5 6L10.91 8.26Z" />
               </svg>
-              Powered by OpenAI
+              Powered by Gemini AI
             </div>
 
             {/* Heading */}

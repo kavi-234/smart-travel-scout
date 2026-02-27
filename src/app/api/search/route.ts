@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server"
-import { searchTravel } from "@/backend/services/openai"
+import { searchTravel } from "@/backend/services/gemini"
 
 /** Maximum characters we forward to the AI — guards against prompt injection and runaway tokens. */
 const MAX_QUERY_LENGTH = 300
 
 // ---------------------------------------------------------------------------
 // Simple in-memory rate limiter — max 5 requests per IP per 60 seconds.
-// This prevents a rapid-click loop from burning through OpenAI quota before
-// the retry backoff in openai.ts even has a chance to kick in.
+// This prevents a rapid-click loop from burning through Gemini quota before
+// the retry backoff in gemini.ts even has a chance to kick in.
 // ---------------------------------------------------------------------------
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>()
 const RATE_LIMIT_MAX = 5
@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
 
     if (error?.message === "RATE_LIMITED") {
       return NextResponse.json(
-        { error: "API quota exceeded. Please wait a minute and try again, or check your OpenAI usage at https://platform.openai.com/usage" },
+        { error: "API quota exceeded. Please wait a minute and try again" },
         { status: 429 }
       )
     }

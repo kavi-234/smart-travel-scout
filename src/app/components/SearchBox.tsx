@@ -4,6 +4,7 @@ interface SearchBoxProps {
     query: string
     onQueryChange: (v: string) => void
     onSearch: () => void
+    onClear: () => void
     loading: boolean
 }
 
@@ -15,7 +16,7 @@ const suggestions = [
     "🧘 Wellness & spa retreat",
 ]
 
-export default function SearchBox({ query, onQueryChange, onSearch, loading }: SearchBoxProps) {
+export default function SearchBox({ query, onQueryChange, onSearch, onClear, loading }: SearchBoxProps) {
     function handleKey(e: React.KeyboardEvent<HTMLInputElement>) {
         if (e.key === "Enter" && !loading) onSearch()
     }
@@ -46,7 +47,7 @@ export default function SearchBox({ query, onQueryChange, onSearch, loading }: S
                 {/* Clear button */}
                 {query && !loading && (
                     <button
-                        onClick={() => onQueryChange("")}
+                        onClick={onClear}
                         className="flex items-center px-2 text-slate-300 dark:text-slate-600 hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors"
                         aria-label="Clear"
                     >

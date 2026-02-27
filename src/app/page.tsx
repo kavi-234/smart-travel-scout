@@ -26,6 +26,13 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null)
   const [hasSearched, setHasSearched] = useState(false)
 
+  function handleClear() {
+    setQuery("")
+    setResults([])
+    setError(null)
+    setHasSearched(false)
+  }
+
   async function handleSearch() {
     const q = query.trim()
     if (!q || loading) return
@@ -116,6 +123,7 @@ export default function Home() {
                 query={query}
                 onQueryChange={setQuery}
                 onSearch={handleSearch}
+                onClear={handleClear}
                 loading={loading}
               />
             </div>
@@ -124,7 +132,7 @@ export default function Home() {
             {!hasSearched && (
               <div className="animate-fade-up-delay2 mt-10 flex items-center justify-center gap-8 sm:gap-12 flex-wrap">
                 {[
-                  { value: "5", label: "Destinations" },
+                  { value: "50+", label: "Destinations" },
                   { value: "AI", label: "Smart Matching" },
                   { value: "Instant", label: "Results" },
                 ].map(({ value, label }) => (
@@ -141,7 +149,7 @@ export default function Home() {
         {/* ── Error ── */}
         {error && (
           <div className="max-w-3xl mx-auto w-full px-4 pb-4">
-            <ErrorMessage message={error} onDismiss={() => setError(null)} />
+            <ErrorMessage message={error} onDismiss={handleClear} />
           </div>
         )}
 
@@ -150,6 +158,21 @@ export default function Home() {
 
         {/* ── Results ── */}
         {showResults && <ResultsGrid results={results} query={query} />}
+
+        {/* ── New Search button — shown after any completed search ── */}
+        {hasSearched && !loading && (
+          <div className="flex justify-center py-8">
+            <button
+              onClick={handleClear}
+              className="flex items-center gap-2 px-6 py-3 rounded-xl border border-indigo-200 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400 text-sm font-semibold hover:bg-indigo-50 dark:hover:bg-indigo-950/50 transition-all duration-200 active:scale-95"
+            >
+              <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              New Search
+            </button>
+          </div>
+        )}
 
         {/* ── Empty state ── */}
         {showEmpty && (
